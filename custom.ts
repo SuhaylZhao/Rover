@@ -1,6 +1,7 @@
+
 /**
- * Use this file to define custom functions and blocks.
- * Read more at https://makecode.microbit.org/blocks/custom
+ * 使用此文件来定义自定义函数和图形块。
+ * 想了解更详细的信息，请前往 https://makecode.microbit.org/blocks/custom
  */
 
 enum MyEnum {
@@ -11,15 +12,15 @@ enum MyEnum {
 }
 
 /**
- * Custom blocks
+ * 自定义图形块
  */
 //% weight=100 color=#0fbc11 icon=""
 namespace custom {
     /**
-     * TODO: describe your function here
-     * @param n describe parameter here, eg: 5
-     * @param s describe parameter here, eg: "Hello"
-     * @param e describe parameter here
+     * TODO: 在此处描述您的函数
+     * @param n 在此处描述参数, eg: 5
+     * @param s 在此处描述参数, eg: "Hello"
+     * @param e 在此处描述参数
      */
     //% block
     export function foo(n: number, s: string, e: MyEnum): void {
@@ -27,8 +28,8 @@ namespace custom {
     }
 
     /**
-     * TODO: describe your function here
-     * @param value describe value here, eg: 5
+     * TODO: 在此处描述您的函数
+     * @param value 在此处描述”值“, eg: 5
      */
     //% block
     export function fib(value: number): number {
