@@ -1,13 +1,13 @@
 {
-    "name": "test-bit",
-    "version": "1.0.0",
-    "description": "test for pxt.",
+    "name": "Untitled",
     "dependencies": {
         "core": "*",
         "radio": "*"
     },
+    "description": "",
     "files": [
+        "main.ts",
         "README.md",
-        "main.ts"
+        "custom.ts"
     ]
 }
