@@ -1,16 +1,30 @@
 /**
- * 使用此文件来定义自定义函数和图形块。
- * 想了解更详细的信息，请前往 https://makecode.microbit.org/blocks/custom
+ * Freenove Micro : Rover.
  */
-/*
-Riven
-modified from pxt-servo/servodriver.ts
-load dependency
-"robotbit": "file:../pxt-robotbit"
-*/
-
-//% color="#31C7D5" weight=10 icon="\uf233"
-namespace rover {
+enum RoverColors {
+    //% block=red
+    Red = 0xFF0000,
+    //% block=orange
+    Orange = 0xFFA500,
+    //% block=yellow
+    Yellow = 0xFFFF00,
+    //% block=green
+    Green = 0x00FF00,
+    //% block=blue
+    Blue = 0x0000FF,
+    //% block=indigo
+    Indigo = 0x4b0082,
+    //% block=violet
+    Violet = 0x8a2be2,
+    //% block=purple
+    Purple = 0xFF00FF,
+    //% block=white
+    White = 0xFFFFFF,
+    //% block=black
+    Black = 0x000000
+}
+//% color="#31C7D5" weight=10 icon="\uf1b9"
+namespace Rover {
     const PCA9685_ADDRESS = 0x43
     const MODE1 = 0x00
     const MODE2 = 0x01
@@ -66,7 +80,7 @@ namespace rover {
     let initializedMatrix = false
     let matBuf = pins.createBuffer(17);
     let distanceBuf = 0;
-
+    let brightness = 255;
     function i2cwrite(addr: number, reg: number, value: number) {
         let buf = pins.createBuffer(2)
         buf[0] = reg
@@ -128,10 +142,15 @@ namespace rover {
         setPwm((index - 1) * 2, 0, 0);
         setPwm((index - 1) * 2 + 1, 0, 0);
     }
-    //% blockId=rover_setRGBLED block="RGBLED | RGBLED%index Color%ccolor"
-    //% weight=100
-    //% ccolor.min=0 ccolor.max=0xFFFFFFFF
-    //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
+    //% blockId=rover_setBrightness block="Brightness %br"
+    //% weight=200
+    //% br.min=0 br.max=255
+    //%br.defl=255
+    export function setBrightness(br: number): void {
+        brightness = br;
+    }
+    //% blockId=rover_setRGBLED block="Set %index Show %ccolor=rover_colors"
+    //% weight=195
     export function setRGBLED(index: RGBLED, ccolor: number): void {
         if (!initialized) {
             initPCA9685()
@@ -139,6 +158,11 @@ namespace rover {
         let blue = ccolor & 0xFF;
         let green = ccolor >> 8 & 0xFF;
         let red = ccolor >> 16 & 0xFF;
+        if (brightness < 255) {
+            red = red * brightness >> 8;
+            green = green * brightness >> 8;
+            blue = blue * brightness >> 8;
+        }
         switch (index) {
             case RGBLED.RGBLED1:
                 setPwm(RGBLED1.R, 0, red * 16)
@@ -164,10 +188,8 @@ namespace rover {
                 break;
         }
     }
-    //% blockId=rover_setAllRGB block="ALLRGBLED|Color%ccolor"
-    //% weight=100
-    //% red.min=0 red.max=0xFFFFFFFF
-    //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
+    //% blockId=rover_setAllRGB block="Set all show %ccolor=rover_colors"
+    //% weight=190
     export function setALLRGB(ccolor: number): void {
         if (!initialized) {
             initPCA9685()
@@ -176,11 +198,53 @@ namespace rover {
             setRGBLED(i + 1, ccolor);
         }
     }
+    /**
+     * Gets the RGB value of a known color
+    */
+    //% blockId="rover_colors" block="Color %color"
+    //% weight=185  
+    export function colors(color: RoverColors): number {
+        return color;
+    }
+    //% block="color $color"
+    //% color.shadow="colorNumberPicker"
+    //% weight=180
+    export function showColor(color: number): number {
+        return color;
+    }
+
+    //% block="color wheel $color"
+    //% color.shadow="colorWheelPicker"
+    //% weight=175
+    export function showColorWheel(color: number): number {
+        return color;
+    }
+
+    //% block="color wheel hsv $color"
+    //% color.shadow="colorWheelHsvPicker"
+    //% weight=170
+    export function showColorWheelHsv(color: number): number {
+        return color;
+    }
+    //% blockId=rover_rgb block="red%red | green%green | blue%blue"
+    //% weight=165
+    //% red.min=0 red.max=255
+    //% green.min=0 green.max=255
+    //% blue.min=0 blue.max=255
+    //% red.defl=128
+    //% green.defl=128
+    //% blue.defl=128
+    export function rgb(red: number, green: number, blue: number): number {
+        return packRGB(red, green, blue);
+    }
+    function packRGB(a: number, b: number, c: number): number {
+        return ((a & 0xFF) << 16) | ((b & 0xFF) << 8) | (c & 0xFF);
+    }
 
     //% blockId=rover_MotorRun block="Motor|%index|speed %speed"
-    //% weight=85
+    //% weight=80
     //% speed.min=-255 speed.max=255
-    //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
+    //% speed.defl=50
     export function MotorRun(index: Motors, speed: number): void {
         if (!initialized) {
             initPCA9685()
@@ -210,58 +274,40 @@ namespace rover {
 
     /**
      * Execute two motors at the same time
-     * @param motor1 First Motor; eg: M1A, M1B
      * @param speed1 [-255-255] speed of motor; eg: 150, -150
-     * @param motor2 Second Motor; eg: M2A, M2B
      * @param speed2 [-255-255] speed of motor; eg: 150, -150
     */
-    //% blockId=rover_motor_dual block="Motor|%motor1|speed %speed1|%motor2|speed %speed2"
-    //% weight=84
+    //% blockId=rover_motor_dual block="speed %speed1|speed %speed2"
+    //% weight=90
     //% speed1.min=-255 speed1.max=255
     //% speed2.min=-255 speed2.max=255
-    //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
-    export function MotorRunDual(motor1: Motors, speed1: number, motor2: Motors, speed2: number): void {
-        MotorRun(motor1, speed1);
-        MotorRun(motor2, speed2);
+    //% speed1.defl=50
+    //% speed2.defl=50
+    export function MotorRunDual(speed1: number, speed2: number): void {
+        MotorRun(Motors.M1, speed1);
+        MotorRun(Motors.M2, speed2);
     }
     /**
      * 
      * @param speed forward speed
      */
-    //% blockId=rover_move_forward block="speed %speed"
-    //% weight=84
+    //% blockId=rover_move_forward block="Move speed $speed"
+    //% weight=95
     //% speed.min=-255 speed.max=255
-    //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
-    export function MoveForward(speed: number): void {
-        MotorRunDual(Motors.M1, speed, Motors.M2, speed);
+    //% speed.shadow="speedPicker"
+    //% speed.defl=50
+    export function Move(speed: number): void {
+        MotorRunDual(speed, speed);
     }
-    /**
-     * Execute single motors with delay
-     * @param index Motor Index; eg: M1A, M1B, M2A, M2B
-     * @param speed [-255-255] speed of motor; eg: 150, -150
-     * @param delay seconde delay to stop; eg: 1
-    */
-    //% blockId=rover_motor_rundelay block="Motor|%index|speed %speed|delay %delay|s"
-    //% weight=81
-    //% speed.min=-255 speed.max=255
-    //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
-    export function MotorRunDelay(index: Motors, speed: number, delay: number): void {
-        MotorRun(index, speed);
-        basic.pause(delay * 1000);
-        MotorRun(index, 0);
-    }
-
-
 
     //% blockId=rover_stop block="Motor Stop|%index|"
-    //% weight=80
+    //% weight=75
     export function MotorStop(index: Motors): void {
         MotorRun(index, 0);
     }
 
     //% blockId=rover_stop_all block="Motor Stop All"
-    //% weight=79
-    //% blockGap=50
+    //% weight=70
     export function MotorStopAll(): void {
         for (let idx = 1; idx <= 2; idx++) {
             stopMotor(idx);
@@ -269,7 +315,7 @@ namespace rover {
     }
 
     //% blockId=rover_ultrasonic block="Ultrasonic"
-    //% weight=10
+    //% weight=65
     export function Ultrasonic(): number {
 
         // send pulse
@@ -290,5 +336,25 @@ namespace rover {
         distanceBuf = d;
         return ret * 10 / 6 / 58;
     }
+    //% blockId=rover_line_tracking block="LineTracking"
+    //% weight=65
+    export function LineTracing(): number {
+        let val = pins.digitalReadPin(DigitalPin.P14) << 2 | pins.digitalReadPin(DigitalPin.P15) << 1 | pins.digitalReadPin(DigitalPin.P16) << 0;
+        return val;
+    }
+    //% blockId=rover_light_tracing block="LightTracing"
+    //% weight=65
+    export function LightTracing(): number {
+        let val = pins.analogReadPin(AnalogPin.P1)
+        return val;
+    }
+    //% blockId=rover_bettery_level block="Bettery_level"
+    //% weight=60
+    export function BatteryLevel(): number {
+        let p2_adc = pins.analogReadPin(AnalogPin.P2);
+        let bat_valotage = Math.round(p2_adc * 6.4516);     //unit: mV ,6.4516 = ~ 2*3.3/1023
+        return bat_valotage;
+    }
+
 }
 
