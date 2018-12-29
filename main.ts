@@ -10,7 +10,7 @@ load dependency
 */
 
 //% color="#31C7D5" weight=10 icon="\uf233"
-namespace carbit {
+namespace rover {
     const PCA9685_ADDRESS = 0x43
     const MODE1 = 0x00
     const MODE2 = 0x01
@@ -28,12 +28,33 @@ namespace carbit {
     const ALL_LED_OFF_H = 0xFD
 
     const TRIG_PIN = DigitalPin.P12
-    const ECHO_PIN = DigitalPin.P16
+    const ECHO_PIN = DigitalPin.P13
 
+    enum RGBLED1 {
+        R = 14,
+        G = 15,
+        B = 13
+    }
+    enum RGBLED2 {
+        R = 5,
+        G = 6,
+        B = 4
+    }
+    enum RGBLED3 {
+        R = 8,
+        G = 9,
+        B = 7
+    }
+    enum RGBLED4 {
+        R = 11,
+        G = 12,
+        B = 10
+    }
     export enum RGBLED {
-        R = 7,
-        G = 8,
-        B = 9
+        RGBLED1 = 1,
+        RGBLED2 = 2,
+        RGBLED3 = 3,
+        RGBLED4 = 4
     }
 
     export enum Motors {
@@ -107,25 +128,53 @@ namespace carbit {
         setPwm((index - 1) * 2, 0, 0);
         setPwm((index - 1) * 2 + 1, 0, 0);
     }
-
-    /**
-     * Servo Execute
-     * @param index Servo Channel; eg: S1
-     * @param degree [0-180] degree of servo; eg: 0, 90, 180
-    */
-    //% blockId=robotbit_servo block="RGBLED|red%red|green%green|blue%blue"
+    //% blockId=robotbit_servo block="RGBLED | RGBLED%index Color%ccolor"
     //% weight=100
-    //% red.min=0 red.max=255
-    //% green.min=0 green.max=255
-    //% blue.min=0 blue.max=255
+    //% ccolor.min=0 ccolor.max=0xFFFFFFFF
     //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
-    export function RGB(red: number, green: number, blue: number): void {
+    export function setRGBLED(index: RGBLED, ccolor: number): void {
         if (!initialized) {
             initPCA9685()
         }
-        setPwm(RGBLED.R, 0, red * 16)
-        setPwm(RGBLED.G, 0, green * 16)
-        setPwm(RGBLED.B, 0, blue * 16)
+        let blue = ccolor & 0xFF;
+        let green = ccolor >> 8 & 0xFF;
+        let red = ccolor >> 16 & 0xFF;
+        switch (index) {
+            case RGBLED.RGBLED1:
+                setPwm(RGBLED1.R, 0, red * 16)
+                setPwm(RGBLED1.G, 0, green * 16)
+                setPwm(RGBLED1.B, 0, blue * 16)
+                break;
+            case RGBLED.RGBLED2:
+                setPwm(RGBLED2.R, 0, red * 16)
+                setPwm(RGBLED2.G, 0, green * 16)
+                setPwm(RGBLED2.B, 0, blue * 16)
+                break;
+            case RGBLED.RGBLED3:
+                setPwm(RGBLED3.R, 0, red * 16)
+                setPwm(RGBLED3.G, 0, green * 16)
+                setPwm(RGBLED3.B, 0, blue * 16)
+                break;
+            case RGBLED.RGBLED4:
+                setPwm(RGBLED4.R, 0, red * 16)
+                setPwm(RGBLED4.G, 0, green * 16)
+                setPwm(RGBLED4.B, 0, blue * 16)
+                break;
+            default:
+                break;
+        }
+    }
+    //% blockId=robotbit_servo block="ALLRGBLED|Color%ccolor"
+    //% weight=100
+    //% red.min=0 red.max=0xFFFFFFFF
+    //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
+    export function setALLRGB(ccolor: number): void {
+        if (!initialized) {
+            initPCA9685()
+        }
+        for (let i = 0; i < 4; i++) {
+            setRGBLED(i + 1, ccolor);
+        }
     }
 
     //% blockId=robotbit_motor_run block="Motor|%index|speed %speed"
@@ -166,14 +215,14 @@ namespace carbit {
      * @param motor2 Second Motor; eg: M2A, M2B
      * @param speed2 [-255-255] speed of motor; eg: 150, -150
     */
-    //% blockId=robotbit_motor_dual block="speed %speed1|speed %speed2"
+    //% blockId=robotbit_motor_dual block="Motor|%motor1|speed %speed1|%motor2|speed %speed2"
     //% weight=84
     //% speed1.min=-255 speed1.max=255
     //% speed2.min=-255 speed2.max=255
     //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
-    export function MotorRunDual(speed1: number, speed2: number): void {
-        MotorRun(Motors.M1, speed1);
-        MotorRun(Motors.M2, speed2);
+    export function MotorRunDual(motor1: Motors, speed1: number, motor2: Motors, speed2: number): void {
+        MotorRun(motor1, speed1);
+        MotorRun(motor2, speed2);
     }
     /**
      * 
@@ -184,7 +233,7 @@ namespace carbit {
     //% speed.min=-255 speed.max=255
     //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
     export function MoveForward(speed: number): void {
-        MotorRunDual(speed, speed);
+        MotorRunDual(Motors.M1, speed, Motors.M2, speed);
     }
     /**
      * Execute single motors with delay

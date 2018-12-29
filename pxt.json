@@ -4,8 +4,7 @@
     "description": "",
     "license": "MIT",
     "dependencies": {
-        "core": "*",
-		"bluetooth": "*"
+        "core": "*"
     },
     "files": [
         "README.md",
