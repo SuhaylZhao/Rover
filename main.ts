@@ -128,7 +128,7 @@ namespace rover {
         setPwm((index - 1) * 2, 0, 0);
         setPwm((index - 1) * 2 + 1, 0, 0);
     }
-    //% blockId=robotbit_servo block="RGBLED | RGBLED%index Color%ccolor"
+    //% blockId=rover_setRGBLED block="RGBLED | RGBLED%index Color%ccolor"
     //% weight=100
     //% ccolor.min=0 ccolor.max=0xFFFFFFFF
     //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
@@ -164,7 +164,7 @@ namespace rover {
                 break;
         }
     }
-    //% blockId=robotbit_servo block="ALLRGBLED|Color%ccolor"
+    //% blockId=rover_setAllRGB block="ALLRGBLED|Color%ccolor"
     //% weight=100
     //% red.min=0 red.max=0xFFFFFFFF
     //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
@@ -177,7 +177,7 @@ namespace rover {
         }
     }
 
-    //% blockId=robotbit_motor_run block="Motor|%index|speed %speed"
+    //% blockId=rover_MotorRun block="Motor|%index|speed %speed"
     //% weight=85
     //% speed.min=-255 speed.max=255
     //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
@@ -215,7 +215,7 @@ namespace rover {
      * @param motor2 Second Motor; eg: M2A, M2B
      * @param speed2 [-255-255] speed of motor; eg: 150, -150
     */
-    //% blockId=robotbit_motor_dual block="Motor|%motor1|speed %speed1|%motor2|speed %speed2"
+    //% blockId=rover_motor_dual block="Motor|%motor1|speed %speed1|%motor2|speed %speed2"
     //% weight=84
     //% speed1.min=-255 speed1.max=255
     //% speed2.min=-255 speed2.max=255
@@ -228,7 +228,7 @@ namespace rover {
      * 
      * @param speed forward speed
      */
-    //% blockId=move_forward block="speed %speed"
+    //% blockId=rover_move_forward block="speed %speed"
     //% weight=84
     //% speed.min=-255 speed.max=255
     //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
@@ -241,7 +241,7 @@ namespace rover {
      * @param speed [-255-255] speed of motor; eg: 150, -150
      * @param delay seconde delay to stop; eg: 1
     */
-    //% blockId=robotbit_motor_rundelay block="Motor|%index|speed %speed|delay %delay|s"
+    //% blockId=rover_motor_rundelay block="Motor|%index|speed %speed|delay %delay|s"
     //% weight=81
     //% speed.min=-255 speed.max=255
     //% name.fieldEditor="gridpicker" name.fieldOptions.columns=4
@@ -253,13 +253,13 @@ namespace rover {
 
 
 
-    //% blockId=robotbit_stop block="Motor Stop|%index|"
+    //% blockId=rover_stop block="Motor Stop|%index|"
     //% weight=80
     export function MotorStop(index: Motors): void {
         MotorRun(index, 0);
     }
 
-    //% blockId=robotbit_stop_all block="Motor Stop All"
+    //% blockId=rover_stop_all block="Motor Stop All"
     //% weight=79
     //% blockGap=50
     export function MotorStopAll(): void {
@@ -268,7 +268,7 @@ namespace rover {
         }
     }
 
-    //% blockId=robotbit_ultrasonic block="Ultrasonic"
+    //% blockId=rover_ultrasonic block="Ultrasonic"
     //% weight=10
     export function Ultrasonic(): number {
 
