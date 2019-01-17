@@ -178,7 +178,7 @@ namespace Rover {
         setPwm((index - 1) * 2, 0, 0);
         setPwm((index - 1) * 2 + 1, 0, 0);
     }
-    //% blockId=rover_setBrightness block="Set Brightness to%br"
+    //% blockId=rover_setBrightness block="Brightness %br"
     //% weight=200
     //% br.min=0 br.max=255
     //%br.defl=255
@@ -189,7 +189,7 @@ namespace Rover {
         leds3.refresh();
         leds4.refresh();
     }
-    //% blockId=rover_setRGBLED block="Set %index Show %ccolor=rover_colors"
+    //% blockId=rover_setRGBLED block="%index show %ccolor=rover_colors"
     //% weight=195
     export function setRGBLED(index: RGBLED, ccolor: number): void {
         if (!initialized) {
@@ -212,7 +212,7 @@ namespace Rover {
                 break;
         }
     }
-    //% blockId=rover_setAllRGB block="Set all show %ccolor=rover_colors"
+    //% blockId=rover_setAllRGB block="All LED show %ccolor=rover_colors"
     //% weight=190
     export function setALLRGB(ccolor: number): void {
         if (!initialized) {
@@ -225,13 +225,13 @@ namespace Rover {
     /**
      * Gets the RGB value of a known color
     */
-    //% blockId="rover_colors" block="Color %color"
+    //% blockId="rover_colors" block="%color"
     //% weight=185  
     //% advanced=true
     export function colors(color: RoverColors): number {
         return color;
     }
-    //% block="color $color"
+    //% block="$color"
     //% color.shadow="colorNumberPicker"
     //% weight=180    
     export function showColor(color: number): number {
@@ -338,7 +338,7 @@ namespace Rover {
      * @param speed1 [-255-255] speed of motor; eg: 150, -150
      * @param speed2 [-255-255] speed of motor; eg: 150, -150
     */
-    //% blockId=rover_motor_dual block="speed %speed1|speed %speed2"
+    //% blockId=rover_motor_dual block="Speed left %speed1|right %speed2"
     //% weight=90
     //% speed1.min=-255 speed1.max=255
     //% speed2.min=-255 speed2.max=255
@@ -360,14 +360,14 @@ namespace Rover {
         MotorRunDual(speed, speed);
     }
 
-    //% blockId=rover_stop block="Motor Stop|%index|"
+    //% blockId=rover_stop block="Stop motor|%index|"
     //% weight=75
     //% advanced=true
     export function MotorStop(index: Motors): void {
         MotorRun(index, 0);
     }
 
-    //% blockId=rover_stop_all block="Motor Stop All"
+    //% blockId=rover_stop_all block="Stop all motors"
     //% weight=70
     export function MotorStopAll(): void {
         for (let idx = 1; idx <= 2; idx++) {
@@ -375,7 +375,7 @@ namespace Rover {
         }
     }
 
-    //% blockId=rover_ultrasonic block="Ultrasonic"
+    //% blockId=rover_ultrasonic block="distance"
     //% weight=65
     export function Ultrasonic(): number {
 
@@ -397,19 +397,19 @@ namespace Rover {
         distanceBuf = d;
         return Math.round(ret * 10 / 6 / 58);
     }
-    //% blockId=rover_line_tracking block="LineTracking"
+    //% blockId=rover_line_tracking block="line-tracking value"
     //% weight=65
     export function LineTracing(): number {
         let val = pins.digitalReadPin(DigitalPin.P14) << 2 | pins.digitalReadPin(DigitalPin.P15) << 1 | pins.digitalReadPin(DigitalPin.P16) << 0;
         return val;
     }
-    //% blockId=rover_light_tracing block="LightTracing"
+    //% blockId=rover_light_tracing block="light-tracing value"
     //% weight=65
     export function LightTracing(): number {
         let val = pins.analogReadPin(AnalogPin.P1)
         return val;
     }
-    //% blockId=rover_bettery_level block="Bettery_level"
+    //% blockId=rover_bettery_level block="battery voltage"
     //% weight=60
     //% advanced=true
     export function BatteryLevel(): number {
@@ -417,8 +417,8 @@ namespace Rover {
         let bat_valotage = Math.round(p2_adc * 6.4516);     //unit: mV ,6.4516 = ~ 2*3.3/1023
         return bat_valotage;
     }
-    //% blockId=rover_set_receive_string block="Set Command to $receivedString"
-    //% weight=50
+    //% blockId=rover_set_receive_string block="Set CMD to $receivedString"
+    //% weight=55
     //% advanced=true
     export function setReceiveString(receivedString: string): void {
         parameterList = []
@@ -431,8 +431,8 @@ namespace Rover {
         }
         currentOrder = parameterList.shift()
     }
-    //% blockId=rover_check_order block="Order is %_inOrder"
-    //% weight=50
+    //% blockId=rover_check_order block="CMD<order> is %_inOrder"
+    //% weight=53
     //% advanced=true
     export function checkOrder(_inOrder: Orders): boolean {
         if (currentOrder == ordersAyyay[_inOrder])
@@ -440,17 +440,24 @@ namespace Rover {
         else
             return false
     }
-    //% blockId=rover_length_of_paramters block="Lenght of Paramters"
+    //% blockId=rover__get_paramter block="CMD<Paramter> at %index"
+    //% weight=52
+    //% advanced=true
+    export function getParameter(index: number): number {
+        return parseFloat(parameterList[index]);
+    }
+    //% blockId=rover_length_of_paramters block="count of paramters"
     //% weight=50
     //% advanced=true
-    export function parametersLength():number{
+    export function parametersLength(): number {
         return parameterList.length;
     }
-    //% blockId=rover_paramtersList block="ParamtersList"
+    //% blockId=rover_paramtersList block="paramtersList"
     //% weight=50
     //% advanced=true
-    export function parametersList():string[]{
+    export function parametersList(): string[] {
         return parameterList;
     }
+
 }
 
