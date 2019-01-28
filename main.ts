@@ -53,7 +53,7 @@ enum LEDIndex {
     LED2_3_4 = 14,
     LED_All = 15
 }
-//% color="#31C7D5" weight=10 icon="\uf1b9"
+//% color="#FF0000" weight=10 icon="\uf1b9"
 //% groups="['LEDs','Motors','Sensors','Commands']"
 namespace Rover {
     const PCA9685_ADDRESS = 0x43
