@@ -36,8 +36,25 @@ enum Orders {
     ECHO_OK = 9,
     NONE = 10
 }
-
+enum LEDIndex {
+    LED1 = 1,
+    LED2 = 2,
+    LED3 = 4,
+    LED4 = 8,
+    LED1_2 = 3,
+    LED1_3 = 5,
+    LED1_4 = 9,
+    LED2_3 = 6,
+    LED2_4 = 10,
+    LED3_4 = 12,
+    LED1_2_3 = 7,
+    LED1_2_4 = 11,
+    LED1_3_4 = 13,
+    LED2_3_4 = 14,
+    LED_All = 15
+}
 //% color="#31C7D5" weight=10 icon="\uf1b9"
+//% groups="['LEDs','Motors','Sensors','Commands']"
 namespace Rover {
     const PCA9685_ADDRESS = 0x43
     const MODE1 = 0x00
@@ -98,13 +115,6 @@ namespace Rover {
     let leds3 = new RGB(8, 9, 7);
     let leds4 = new RGB(11, 12, 10);
 
-    export enum RGBLED {
-        LED1 = 1,
-        LED2 = 2,
-        LED3 = 3,
-        LED4 = 4
-    }
-
     export enum Motors {
         M1 = 0x1,
         M2 = 0x2
@@ -114,7 +124,6 @@ namespace Rover {
     let initialized = false;
     let distanceBuf = 0;
     let brightness = 255;
-    let orderString = "";
     let currentOrder = "K";
     let parameterList: string[] = []
     function i2cwrite(addr: number, reg: number, value: number) {
@@ -181,7 +190,9 @@ namespace Rover {
     //% blockId=rover_setBrightness block="Brightness %br"
     //% weight=200
     //% br.min=0 br.max=255
-    //%br.defl=255
+    //% br.defl=255
+    //% color=#FFA500
+    //% group="LEDs"
     export function setBrightness(br: number): void {
         brightness = br;
         leds1.refresh();
@@ -189,31 +200,40 @@ namespace Rover {
         leds3.refresh();
         leds4.refresh();
     }
-    //% blockId=rover_setRGBLED block="%index show %ccolor=rover_colors"
+    //% blockId="rover_led_index" block="%index"
+    //% weight=185  
+    //% advanced=true
+    //% color=#FF0000
+    //% group="LEDs"    
+    export function ledIndex(index: LEDIndex): number {
+        return index;
+    }
+    //% blockId=rover_setRGBLED block="%index=rover_led_index show %ccolor=rover_colors"
     //% weight=195
-    export function setRGBLED(index: RGBLED, ccolor: number): void {
+    //% color=#FFA500
+    //% group="LEDs"
+    export function setRGBLED(index: number, ccolor: number): void {
         if (!initialized) {
             initPCA9685()
         }
-        switch (index) {
-            case RGBLED.LED1:
-                leds1.setColor(ccolor);
-                break;
-            case RGBLED.LED2:
-                leds2.setColor(ccolor);
-                break;
-            case RGBLED.LED3:
-                leds3.setColor(ccolor);
-                break;
-            case RGBLED.LED4:
-                leds4.setColor(ccolor);
-                break;
-            default:
-                break;
+        index = Math.constrain(index, 0, 15);
+        if ((index & 0x01) == 0x01) {
+            leds1.setColor(ccolor);
+        }
+        if ((index & 0x02) == 0x02) {
+            leds2.setColor(ccolor);
+        }
+        if ((index & 0x04) == 0x04) {
+            leds3.setColor(ccolor);
+        }
+        if ((index & 0x08) == 0x08) {
+            leds4.setColor(ccolor);
         }
     }
     //% blockId=rover_setAllRGB block="All LED show %ccolor=rover_colors"
     //% weight=190
+    //% group="LEDs"
+    //% color=#FFA500
     export function setALLRGB(ccolor: number): void {
         if (!initialized) {
             initPCA9685()
@@ -228,12 +248,16 @@ namespace Rover {
     //% blockId="rover_colors" block="%color"
     //% weight=185  
     //% advanced=true
+    //% group="LEDs"
+    //% color=#FF0000
     export function colors(color: RoverColors): number {
         return color;
     }
-    //% block="$color"
+    //% block="%color"
     //% color.shadow="colorNumberPicker"
     //% weight=180    
+    //% group="LEDs"
+    //% color=#FFA500
     export function showColor(color: number): number {
         return color;
     }
@@ -246,6 +270,8 @@ namespace Rover {
     //% green.defl=128
     //% blue.defl=128
     //% advanced=true
+    //% group="LEDs"
+    //% color=#FFA500
     export function rgb(red: number, green: number, blue: number): number {
         return packRGB(red, green, blue);
     }
@@ -266,6 +292,8 @@ namespace Rover {
     //% h.defl=0
     //% s.defl=99
     //% l.defl=50
+    //% group="LEDs"
+    //% color=#FFA500
     export function hsl(h: number, s: number, l: number): number {
         h = Math.round(h);
         s = Math.round(s);
@@ -306,6 +334,8 @@ namespace Rover {
     //% speed.min=-255 speed.max=255
     //% speed.defl=50
     //% advanced=true
+    //% group="Motors"
+    //% color=#222222
     export function MotorRun(index: Motors, speed: number): void {
         if (!initialized) {
             initPCA9685()
@@ -344,6 +374,8 @@ namespace Rover {
     //% speed2.min=-255 speed2.max=255
     //% speed1.defl=50
     //% speed2.defl=50
+    //% group="Motors"
+    //% color=#222222
     export function MotorRunDual(speed1: number, speed2: number): void {
         MotorRun(Motors.M1, speed1);
         MotorRun(Motors.M2, speed2);
@@ -352,10 +384,12 @@ namespace Rover {
      * 
      * @param speed forward speed
      */
-    //% blockId=rover_move_forward block="Move speed $speed"
+    //% blockId=rover_move_forward block="Move speed %speed"
     //% weight=95
     //% speed.min=-255 speed.max=255
     //% speed.defl=50
+    //% group="Motors"
+    //% color=#222222
     export function Move(speed: number): void {
         MotorRunDual(speed, speed);
     }
@@ -363,12 +397,16 @@ namespace Rover {
     //% blockId=rover_stop block="Stop motor|%index|"
     //% weight=75
     //% advanced=true
+    //% group="Motors"
+    //% color=#222222
     export function MotorStop(index: Motors): void {
         MotorRun(index, 0);
     }
 
     //% blockId=rover_stop_all block="Stop all motors"
     //% weight=70
+    //% group="Motors"
+    //% color=#222222
     export function MotorStopAll(): void {
         for (let idx = 1; idx <= 2; idx++) {
             stopMotor(idx);
@@ -377,6 +415,8 @@ namespace Rover {
 
     //% blockId=rover_ultrasonic block="distance"
     //% weight=65
+    //% group="Sensors"
+    //% color=#FF00F0
     export function Ultrasonic(): number {
 
         // send pulse
@@ -399,34 +439,41 @@ namespace Rover {
     }
     //% blockId=rover_line_tracking block="line-tracking value"
     //% weight=65
+    //% group="Sensors"
+    //% color=#FF00F0
     export function LineTracing(): number {
         let val = pins.digitalReadPin(DigitalPin.P14) << 2 | pins.digitalReadPin(DigitalPin.P15) << 1 | pins.digitalReadPin(DigitalPin.P16) << 0;
         return val;
     }
     //% blockId=rover_light_tracing block="light-tracing value"
     //% weight=65
+    //% group="Sensors"
+    //% color=#FF00F0
     export function LightTracing(): number {
         let val = pins.analogReadPin(AnalogPin.P1)
         return val;
     }
     //% blockId=rover_bettery_level block="battery voltage"
     //% weight=60
-    //% advanced=true
+    //% group="Sensors"
+    //% color=#FF00F0
     export function BatteryLevel(): number {
         let p2_adc = pins.analogReadPin(AnalogPin.P2);
         let bat_valotage = Math.round(p2_adc * 6.4516);     //unit: mV ,6.4516 = ~ 2*3.3/1023
         return bat_valotage;
     }
-    //% blockId=rover_set_receive_string block="Set CMD to $receivedString"
+    //% blockId=rover_set_receive_string block="Set CMD to %receivedString"
     //% weight=55
     //% advanced=true
+    //% group="Commands"
+    //% color=#0000FF
     export function setReceiveString(receivedString: string): void {
         parameterList = []
         let interval = receivedString.indexOf("#")
         while (interval >= 0) {
             let parameter = receivedString.substr(0, interval)
             parameterList.push(parameter)
-            receivedString = receivedString.substr(interval + 1, 50)
+            receivedString = receivedString.substr(interval + 1, receivedString.length - interval - 1)
             interval = receivedString.indexOf("#")
         }
         currentOrder = parameterList.shift()
@@ -434,27 +481,53 @@ namespace Rover {
     //% blockId=rover_check_order block="CMD<order> is %_inOrder"
     //% weight=53
     //% advanced=true
+    //% group="Commands"
+    //% color=#0000FF
     export function checkOrder(_inOrder: Orders): boolean {
         if (currentOrder == ordersAyyay[_inOrder])
             return true
         else
             return false
     }
-    //% blockId=rover__get_paramter block="CMD<Paramter> at %index"
+    //% blockId=rover_get_paramter block="CMD<Paramter> at %index"
     //% weight=52
+    //% index.min=0 index.max=5
+    //% index.defl=0
     //% advanced=true
+    //% group="Commands"
+    //% color=#0000FF
     export function getParameter(index: number): number {
         return parseFloat(parameterList[index]);
+    }
+    //% blockId=rover_send_string block="CMD<order> %_inOrder | CMD<Paramter>%paramters"
+    //% weight=51
+    //% advanced=true
+    //% group="Commands"
+    //% color=#0000FF
+    export function SendString(_inOrder: Orders, paramters: number): string {
+        return ordersAyyay[_inOrder] + "#" + paramters + "#";
+    }
+    //% blockId=rover_order_export block="%_inOrder"
+    //% weight=50
+    //% advanced=true
+    //% group="Commands"
+    //% color=#0000FF
+    export function order_export(_inOrder: Orders): string {
+        return ordersAyyay[_inOrder];
     }
     //% blockId=rover_length_of_paramters block="count of paramters"
     //% weight=50
     //% advanced=true
+    //% group="Commands"
+    //% color=#0070FF
     export function parametersLength(): number {
         return parameterList.length;
     }
     //% blockId=rover_paramtersList block="paramtersList"
     //% weight=50
     //% advanced=true
+    //% group="Commands"
+    //% color=#0070FF
     export function parametersList(): string[] {
         return parameterList;
     }
