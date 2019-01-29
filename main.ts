@@ -53,6 +53,13 @@ enum LEDIndex {
     LED2_3_4 = 14,
     LED_All = 15
 }
+enum RoverModes {
+    Mode_None = 0,
+    Mode_ObstacleAvoidance = 1,
+    Mode_LightTracing = 2,
+    Mode_LineTracking = 3,
+    Mode_Remote = 4
+}
 //% color="#FF0000" weight=10 icon="\uf1b9"
 //% groups="['LEDs','Motors','Sensors','Commands']"
 namespace Rover {
@@ -126,6 +133,7 @@ namespace Rover {
     let brightness = 255;
     let currentOrder = "K";
     let parameterList: string[] = []
+    let realMode = 0;
     function i2cwrite(addr: number, reg: number, value: number) {
         let buf = pins.createBuffer(2)
         buf[0] = reg
@@ -478,6 +486,14 @@ namespace Rover {
         }
         currentOrder = parameterList.shift()
     }
+    //% blockId=rover_get_order block="CMD<order>"
+    //% weight=53
+    //% advanced=true
+    //% group="Commands"
+    //% color=#0000FF
+    export function getOrder(): string {
+        return currentOrder
+    }
     //% blockId=rover_check_order block="CMD<order> is %_inOrder"
     //% weight=53
     //% advanced=true
@@ -507,13 +523,40 @@ namespace Rover {
     export function SendString(_inOrder: Orders, paramters: number): string {
         return ordersAyyay[_inOrder] + "#" + paramters + "#";
     }
+    //% blockId=rover_set_rover_mode block="set rover mode to %mode"
+    //% weight=51
+    //% advanced=true
+    //% group="Commands"
+    //% color=#0070FF
+    export function setRoverMode(mode: number): void {
+        realMode = mode;
+    }
+    //% blockId=rover_check_mode block="Rover mode is %isMode"
+    //% weight=51
+    //% advanced=true
+    //% group="Commands"
+    //% color=#0070FF
+    export function checkMode(isMode: RoverModes): boolean {
+        if (realMode == isMode)
+            return true;
+        else
+            return false;
+    }
     //% blockId=rover_order_export block="%_inOrder"
     //% weight=50
     //% advanced=true
     //% group="Commands"
-    //% color=#0000FF
+    //% color=#0070FF
     export function order_export(_inOrder: Orders): string {
         return ordersAyyay[_inOrder];
+    }
+    //% blockId=rover_rover_mode_export block="%mode"
+    //% weight=50
+    //% advanced=true
+    //% group="Commands"
+    //% color=#0070FF
+    export function rover_mode_export(mode: RoverModes): number {
+        return mode;
     }
     //% blockId=rover_length_of_paramters block="count of paramters"
     //% weight=50
@@ -523,7 +566,7 @@ namespace Rover {
     export function parametersLength(): number {
         return parameterList.length;
     }
-    //% blockId=rover_paramtersList block="paramtersList"
+    //% blockId=rover_paramtersList block="ArrayList<paramters>"
     //% weight=50
     //% advanced=true
     //% group="Commands"
