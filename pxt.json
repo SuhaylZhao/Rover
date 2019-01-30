@@ -1,7 +1,7 @@
 {
     "name": "Rover",
     "version": "0.0.5",
-    "description": "",
+    "description": "Freenove Micro:Rover extension for makecode & micro:bit",
     "license": "MIT",
     "dependencies": {
         "core": "*"
