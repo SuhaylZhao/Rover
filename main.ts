@@ -246,9 +246,7 @@ namespace Rover {
         if (!initialized) {
             initPCA9685()
         }
-        for (let i = 0; i < 4; i++) {
-            setRGBLED(i + 1, ccolor);
-        }
+        setRGBLED(LEDIndex.LED_All, ccolor);
     }
     /**
      * Gets the RGB value of a known color
