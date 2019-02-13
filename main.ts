@@ -1,6 +1,9 @@
 /**
  * Freenove Micro : Rover.
  */
+/**
+ * RoverColors: Some common colors
+ */
 enum RoverColors {
     //% block=red
     Red = 0xFF0000,
@@ -23,6 +26,9 @@ enum RoverColors {
     //% block=black
     Black = 0x000000
 }
+/**
+ * Orders: Command parameter
+ */
 enum Orders {
     MOVE = 0,
     STOP = 1,
@@ -36,6 +42,9 @@ enum Orders {
     ECHO_OK = 9,
     NONE = 10
 }
+/**
+ * LEDIndex: LED Index Combination Value
+ */
 enum LEDIndex {
     LED1 = 1,
     LED2 = 2,
@@ -53,6 +62,9 @@ enum LEDIndex {
     LED2_3_4 = 14,
     LED_All = 15
 }
+/**
+ * RoverModes: Rover's working mode
+ */
 enum RoverModes {
     Mode_None = 0,
     Mode_ObstacleAvoidance = 1,
@@ -60,45 +72,65 @@ enum RoverModes {
     Mode_LineTracking = 3,
     Mode_Remote = 4
 }
+/**
+ * MotorActions: Stop or Brake
+ */
+enum MotorActions {
+    Stop = 1,
+    Brake = 2
+}
+/**
+ * Rover: blocks 
+ */
 //% color="#FF0000" weight=10 icon="\uf1b9"
 //% groups="['LEDs','Motors','Sensors','Commands']"
 namespace Rover {
-    const PCA9685_ADDRESS = 0x43
-    const MODE1 = 0x00
-    const MODE2 = 0x01
-    const SUBADR1 = 0x02
-    const SUBADR2 = 0x03
-    const SUBADR3 = 0x04
-    const PRESCALE = 0xFE
-    const LED0_ON_L = 0x06
-    const LED0_ON_H = 0x07
-    const LED0_OFF_L = 0x08
-    const LED0_OFF_H = 0x09
-    const ALL_LED_ON_L = 0xFA
-    const ALL_LED_ON_H = 0xFB
-    const ALL_LED_OFF_L = 0xFC
-    const ALL_LED_OFF_H = 0xFD
+    const PCA9685_ADDRESS = 0x43;
+    const MODE1 = 0x00;
+    const MODE2 = 0x01;
+    const SUBADR1 = 0x02;
+    const SUBADR2 = 0x03;
+    const SUBADR3 = 0x04;
+    const PRESCALE = 0xFE;
+    const LED0_ON_L = 0x06;
+    const LED0_ON_H = 0x07;
+    const LED0_OFF_L = 0x08;
+    const LED0_OFF_H = 0x09;
+    const ALL_LED_ON_L = 0xFA;
+    const ALL_LED_ON_H = 0xFB;
+    const ALL_LED_OFF_L = 0xFC;
+    const ALL_LED_OFF_H = 0xFD;
 
-    const TRIG_PIN = DigitalPin.P12
-    const ECHO_PIN = DigitalPin.P13
-
+    const TRIG_PIN = DigitalPin.P12;
+    const ECHO_PIN = DigitalPin.P13;
+    /**
+     * Class RGB: Control the color and brightness of RGB LED
+     */
     class RGB {
         redPin: number;
         greenPin: number;
         bluePin: number;
         color: number;
-
+        /**
+         * Pins number connected to LED.
+         * @param _redPin red pin number.
+         * @param _greenPin green pin number.
+         * @param _bluePin blue  pin number.
+         */
         constructor(_redPin: number, _greenPin: number, _bluePin: number) {
             this.redPin = _redPin;
             this.greenPin = _greenPin;
             this.bluePin = _bluePin;
             this.color = 0;
-        }
-
-        setColor(ccolor: number): void {
-            if (!initialized) {
-                initPCA9685()
+            if (!is_PCA9685_Initialized) {
+                init_PCA9685()
             }
+        }
+        /**
+         * set leds color 
+         * @param ccolor , the color rgb value 
+         */
+        setColor(ccolor: number): void {
             this.color = ccolor;
             let blue = ccolor & 0xFF;
             let green = ccolor >> 8 & 0xFF;
@@ -112,76 +144,93 @@ namespace Rover {
             setPwm(this.greenPin, 0, green * 16)
             setPwm(this.bluePin, 0, blue * 16)
         }
+        /**
+         * refresh leds.
+         */
         refresh(): void {
             this.setColor(this.color)
         }
     }
-
+    /**
+     * Fixed pin number, determined by hardware.
+     */
     let leds1 = new RGB(14, 15, 13);
     let leds2 = new RGB(5, 6, 4);
     let leds3 = new RGB(8, 9, 7);
     let leds4 = new RGB(11, 12, 10);
-
+    /**
+     * define the motor index.
+     */
     export enum Motors {
         M1 = 0x1,
         M2 = 0x2
     }
 
     let ordersAyyay = "ABCDEFGHIJK";
-    let initialized = false;
-    let distanceBuf = 0;
+    let is_PCA9685_Initialized = false;
+    let lastEchoDuration = 0;
     let brightness = 255;
     let currentOrder = "K";
     let parameterList: string[] = []
     let realMode = 0;
-    function i2cwrite(addr: number, reg: number, value: number) {
-        let buf = pins.createBuffer(2)
-        buf[0] = reg
-        buf[1] = value
-        pins.i2cWriteBuffer(addr, buf)
+    /**
+     * the function of i2c_write
+     * @param addr the address of i2c device
+     * @param reg  the register of i2c device
+     * @param value Values to be written
+     */
+    function i2cWrite(addr: number, reg: number, value: number) {
+        let buf = pins.createBuffer(2);
+        buf[0] = reg;
+        buf[1] = value;
+        pins.i2cWriteBuffer(addr, buf);
     }
 
-    function i2ccmd(addr: number, value: number) {
-        let buf = pins.createBuffer(1)
-        buf[0] = value
-        pins.i2cWriteBuffer(addr, buf)
-    }
-
-    function i2cread(addr: number, reg: number) {
+    function i2cRead(addr: number, reg: number) {
         pins.i2cWriteNumber(addr, reg, NumberFormat.UInt8BE);
         let val = pins.i2cReadNumber(addr, NumberFormat.UInt8BE);
         return val;
     }
-
-    function initPCA9685(): void {
-        i2cwrite(PCA9685_ADDRESS, MODE1, 0x00)
-        setFreq(1000);
-        for (let idx = 0; idx < 16; idx++) {
-            setPwm(idx, 0, 0);
-        }
-        initialized = true
-    }
-
+    /**
+     * set pwm frequence.
+     * @param freq frequence: 40 ~ 1000.
+     */
     function setFreq(freq: number): void {
         // Constrain the frequency
+        freq = Math.constrain(freq, 40, 1000);
         let prescaleval = 25000000;
         prescaleval /= 4096;
         prescaleval /= freq;
         prescaleval -= 1;
         let prescale = prescaleval; //Math.Floor(prescaleval + 0.5);
-        let oldmode = i2cread(PCA9685_ADDRESS, MODE1);
+        let oldmode = i2cRead(PCA9685_ADDRESS, MODE1);
         let newmode = (oldmode & 0x7F) | 0x10; // sleep
-        i2cwrite(PCA9685_ADDRESS, MODE1, newmode); // go to sleep
-        i2cwrite(PCA9685_ADDRESS, PRESCALE, prescale); // set the prescaler
-        i2cwrite(PCA9685_ADDRESS, MODE1, oldmode);
+        i2cWrite(PCA9685_ADDRESS, MODE1, newmode); // go to sleep
+        i2cWrite(PCA9685_ADDRESS, PRESCALE, prescale); // set the prescaler
+        i2cWrite(PCA9685_ADDRESS, MODE1, oldmode);
         control.waitMicros(5000);
-        i2cwrite(PCA9685_ADDRESS, MODE1, oldmode | 0xa1);
+        i2cWrite(PCA9685_ADDRESS, MODE1, oldmode | 0xa1);
     }
-
+    /**
+     * Initialize the PCA9685.
+     */
+    function init_PCA9685(): void {
+        i2cWrite(PCA9685_ADDRESS, MODE1, 0x00);
+        setFreq(1000);
+        for (let idx = 0; idx < 16; idx++) {
+            setPwm(idx, 0, 0);
+        }
+        is_PCA9685_Initialized = true;
+    }
+    /**
+     * Setting the duty cycle of PWM for pin.
+     * @param channel the channel of pca9685, 0 ~ 15.
+     * @param on high level point, 0 ~ 4095
+     * @param off low level point, 0 ~ 4095
+     */
     function setPwm(channel: number, on: number, off: number): void {
         if (channel < 0 || channel > 15)
             return;
-
         let buf = pins.createBuffer(5);
         buf[0] = LED0_ON_L + 4 * channel;
         buf[1] = on & 0xff;
@@ -190,11 +239,10 @@ namespace Rover {
         buf[4] = (off >> 8) & 0xff;
         pins.i2cWriteBuffer(PCA9685_ADDRESS, buf);
     }
-
-    function stopMotor(index: number) {
-        setPwm((index - 1) * 2, 0, 0);
-        setPwm((index - 1) * 2 + 1, 0, 0);
-    }
+    /**
+     * Set all leds brightness.
+     * @param br the brightness value, 0 ~ 255.
+     */
     //% blockId=rover_setBrightness block="Brightness %br"
     //% weight=200
     //% br.min=0 br.max=255
@@ -208,6 +256,10 @@ namespace Rover {
         leds3.refresh();
         leds4.refresh();
     }
+    /**
+     * export the leds index.
+     * @param index the leds index.
+     */
     //% blockId="rover_led_index" block="%index"
     //% weight=185  
     //% advanced=true
@@ -216,13 +268,18 @@ namespace Rover {
     export function ledIndex(index: LEDIndex): number {
         return index;
     }
+    /**
+     * setting the color of leds.
+     * @param index the index of leds.
+     * @param ccolor rgb value of color
+     */
     //% blockId=rover_setRGBLED block="%index=rover_led_index show %ccolor=rover_colors"
     //% weight=195
     //% color=#FFA500
     //% group="LEDs"
     export function setRGBLED(index: number, ccolor: number): void {
-        if (!initialized) {
-            initPCA9685()
+        if (!is_PCA9685_Initialized) {
+            init_PCA9685()
         }
         index = Math.constrain(index, 0, 15);
         if ((index & 0x01) == 0x01) {
@@ -238,13 +295,17 @@ namespace Rover {
             leds4.setColor(ccolor);
         }
     }
+    /**
+     * setting the color of all leds.
+     * @param ccolor rgb value of color
+     */
     //% blockId=rover_setAllRGB block="All LED show %ccolor=rover_colors"
     //% weight=190
     //% group="LEDs"
     //% color=#FFA500
     export function setALLRGB(ccolor: number): void {
-        if (!initialized) {
-            initPCA9685()
+        if (!is_PCA9685_Initialized) {
+            init_PCA9685()
         }
         setRGBLED(LEDIndex.LED_All, ccolor);
     }
@@ -259,6 +320,9 @@ namespace Rover {
     export function colors(color: RoverColors): number {
         return color;
     }
+    /**
+     * Gets the RGB value of a known color
+    */
     //% block="%color"
     //% color.shadow="colorNumberPicker"
     //% weight=180    
@@ -267,6 +331,12 @@ namespace Rover {
     export function showColor(color: number): number {
         return color;
     }
+    /**
+     * customize rgb values.
+     * @param red red value
+     * @param green green value 
+     * @param blue blue value
+     */
     //% blockId=rover_rgb block="red%red | green%green | blue%blue"
     //% weight=165
     //% red.min=0 red.max=255
@@ -335,6 +405,11 @@ namespace Rover {
         let b = b$ + m;
         return packRGB(r, g, b);
     }
+    /**
+     * Running a motor at a specified speed.
+     * @param index the index of the motor.
+     * @param speed the speed of the motor.
+     */
     //% blockId=rover_MotorRun block="Motor|%index|speed %speed"
     //% weight=80
     //% speed.min=-255 speed.max=255
@@ -343,8 +418,8 @@ namespace Rover {
     //% group="Motors"
     //% color=#222222
     export function MotorRun(index: Motors, speed: number): void {
-        if (!initialized) {
-            initPCA9685()
+        if (!is_PCA9685_Initialized) {
+            init_PCA9685()
         }
         speed = speed * 16; // map 255 to 4096
         if (speed >= 4096) {
@@ -368,9 +443,17 @@ namespace Rover {
             setPwm(pn, 0, -speed)
         }
     }
+    /**
+     * Braking a motor.
+     * @param index the index of the motor.
+     */
+    function brakeMotor(index: Motors) {
+        setPwm((index - 1) * 2, 0, 4095);
+        setPwm((index - 1) * 2 + 1, 0, 4095);
+    }
 
     /**
-     * Execute two motors at the same time
+     * Running two motors at the same time
      * @param speed1 [-255-255] speed of motor; eg: 150, -150
      * @param speed2 [-255-255] speed of motor; eg: 150, -150
     */
@@ -387,8 +470,8 @@ namespace Rover {
         MotorRun(Motors.M2, speed2);
     }
     /**
-     * 
-     * @param speed forward speed
+     * Running two motors at the same speed.
+     * @param speed speed of motors.
      */
     //% blockId=rover_move_forward block="Move speed %speed"
     //% weight=95
@@ -399,33 +482,58 @@ namespace Rover {
     export function Move(speed: number): void {
         MotorRunDual(speed, speed);
     }
-
-    //% blockId=rover_stop block="Stop motor|%index|"
+    /**
+     * Stop or Brake a motor.
+     * @param act Stop or Brake.
+     * @param index the index of the motor.
+     */
+    //% blockId=rover_stop block="%act=MotorActions motor|%index|"
     //% weight=75
     //% advanced=true
     //% group="Motors"
     //% color=#222222
-    export function MotorStop(index: Motors): void {
-        MotorRun(index, 0);
+    export function MotorStop(act: MotorActions, index: Motors): void {
+        if (!is_PCA9685_Initialized) {
+            init_PCA9685()
+        }
+        if (act = MotorActions.Stop) {
+            MotorRun(index, 0);
+        }
+        else if (act = MotorActions.Brake) {
+            brakeMotor(index);
+        }
     }
-
-    //% blockId=rover_stop_all block="Stop all motors"
+    /**
+     * Stop or Brake all motor.
+     * @param act Stop or Brake.
+     */
+    //% blockId=rover_stop_all block="%act=MotorActions all motors"
     //% weight=70
     //% group="Motors"
     //% color=#222222
-    export function MotorStopAll(): void {
-        for (let idx = 1; idx <= 2; idx++) {
-            stopMotor(idx);
+    export function MotorStopAll(act: MotorActions): void {
+        if (!is_PCA9685_Initialized) {
+            init_PCA9685()
+        }
+        if (act = MotorActions.Stop) {
+            MotorRun(Motors.M1, 0);
+            MotorRun(Motors.M2, 0);
+        }
+        else if (act = MotorActions.Brake) {
+            brakeMotor(Motors.M1);
+            brakeMotor(Motors.M2);
         }
     }
-
+    /**
+     * Export the distance measured by the ultrasonic module.
+     */
     //% blockId=rover_ultrasonic block="distance"
     //% weight=65
     //% group="Sensors"
     //% color=#FF00F0
     export function Ultrasonic(): number {
 
-        // send pulse
+        //send trig pulse
         pins.setPull(TRIG_PIN, PinPullMode.PullNone);
         pins.digitalWritePin(TRIG_PIN, 0)
         control.waitMicros(2);
@@ -433,24 +541,30 @@ namespace Rover {
         control.waitMicros(10);
         pins.digitalWritePin(TRIG_PIN, 0)
 
-        // read pulse  max distance : 6m  
-        let d = pins.pulseIn(ECHO_PIN, PulseValue.High, 35000);
-        let ret = d;
-        // filter timeout spikes
-        if (ret == 0 && distanceBuf != 0) {
-            ret = distanceBuf;
+        // read echo pulse  max distance : 6m  
+        let t = pins.pulseIn(ECHO_PIN, PulseValue.High, 35000);
+        let ret = t;
+
+        if (ret == 0 && lastEchoDuration != 0) {
+            ret = lastEchoDuration;
         }
-        distanceBuf = d;
+        lastEchoDuration = t;
         return Math.round(ret * 10 / 6 / 58);
     }
+    /**
+     * Export value of line-tracking sensor.
+     */
     //% blockId=rover_line_tracking block="line-tracking value"
     //% weight=65
     //% group="Sensors"
     //% color=#FF00F0
-    export function LineTracing(): number {
+    export function LineTracking(): number {
         let val = pins.digitalReadPin(DigitalPin.P14) << 2 | pins.digitalReadPin(DigitalPin.P15) << 1 | pins.digitalReadPin(DigitalPin.P16) << 0;
         return val;
     }
+    /**
+     * Export value of light-tracing sensor.
+     */
     //% blockId=rover_light_tracing block="light-tracing value"
     //% weight=65
     //% group="Sensors"
@@ -459,6 +573,9 @@ namespace Rover {
         let val = pins.analogReadPin(AnalogPin.P1)
         return val;
     }
+    /**
+     * Export battery voltage value.
+     */
     //% blockId=rover_bettery_level block="battery voltage"
     //% weight=60
     //% group="Sensors"
@@ -468,6 +585,10 @@ namespace Rover {
         let bat_valotage = Math.round(p2_adc * 6.4516);     //unit: mV ,6.4516 = ~ 2*3.3/1023
         return bat_valotage;
     }
+    /**
+     * Set command strings and parse commands and parameters.
+     * @param receivedString String to parse.
+     */
     //% blockId=rover_set_receive_string block="Set CMD to %receivedString"
     //% weight=55
     //% advanced=true
@@ -484,6 +605,9 @@ namespace Rover {
         }
         currentOrder = parameterList.shift()
     }
+    /**
+     * Export parsed CMD<order>.
+     */
     //% blockId=rover_get_order block="CMD<order>"
     //% weight=53
     //% advanced=true
@@ -492,6 +616,10 @@ namespace Rover {
     export function getOrder(): string {
         return currentOrder
     }
+    /**
+     * Determine whether the parsed command is a known command.
+     * @param _inOrder Known commands.
+     */
     //% blockId=rover_check_order block="CMD<order> is %_inOrder"
     //% weight=53
     //% advanced=true
@@ -503,6 +631,10 @@ namespace Rover {
         else
             return false
     }
+    /**
+     * Get the parameters in the list.
+     * @param index the index of parameter list.
+     */
     //% blockId=rover_get_paramter block="CMD<Paramter> at %index"
     //% weight=52
     //% index.min=0 index.max=5
@@ -513,6 +645,11 @@ namespace Rover {
     export function getParameter(index: number): number {
         return parseFloat(parameterList[index]);
     }
+    /**
+     * Combining commands and parameters to be sent into strings.
+     * @param _inOrder Commands to be sent.
+     * @param paramters The parameters to be sent
+     */
     //% blockId=rover_send_string block="CMD<order> %_inOrder | CMD<Paramter>%paramters"
     //% weight=51
     //% advanced=true
@@ -521,6 +658,10 @@ namespace Rover {
     export function SendString(_inOrder: Orders, paramters: number): string {
         return ordersAyyay[_inOrder] + "#" + paramters + "#";
     }
+    /**
+     * Set the working mode of Rover.
+     * @param mode Rover's working mode.
+     */
     //% blockId=rover_set_rover_mode block="set rover mode to %mode"
     //% weight=51
     //% advanced=true
@@ -529,6 +670,10 @@ namespace Rover {
     export function setRoverMode(mode: number): void {
         realMode = mode;
     }
+    /**
+     * Determine whether a given mode is a known mode.
+     * @param isMode known mode.
+     */
     //% blockId=rover_check_mode block="Rover mode is %isMode"
     //% weight=51
     //% advanced=true
@@ -540,6 +685,10 @@ namespace Rover {
         else
             return false;
     }
+    /**
+     * Export the order list.
+     * @param _inOrder Order list.
+     */
     //% blockId=rover_order_export block="%_inOrder"
     //% weight=50
     //% advanced=true
@@ -548,6 +697,10 @@ namespace Rover {
     export function order_export(_inOrder: Orders): string {
         return ordersAyyay[_inOrder];
     }
+    /**
+     * Export the rover mode list.
+     * @param mode known mode list.
+     */
     //% blockId=rover_rover_mode_export block="%mode"
     //% weight=50
     //% advanced=true
@@ -556,6 +709,9 @@ namespace Rover {
     export function rover_mode_export(mode: RoverModes): number {
         return mode;
     }
+    /**
+     * Number of parsed parameters.
+     */
     //% blockId=rover_length_of_paramters block="count of paramters"
     //% weight=50
     //% advanced=true
@@ -564,6 +720,9 @@ namespace Rover {
     export function parametersLength(): number {
         return parameterList.length;
     }
+    /**
+     * String list of parsed parameters.
+     */
     //% blockId=rover_paramtersList block="ArrayList<paramters>"
     //% weight=50
     //% advanced=true
