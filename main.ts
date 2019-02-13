@@ -496,10 +496,10 @@ namespace Rover {
         if (!is_PCA9685_Initialized) {
             init_PCA9685()
         }
-        if (act = MotorActions.Stop) {
+        if (act == MotorActions.Stop) {
             MotorRun(index, 0);
         }
-        else if (act = MotorActions.Brake) {
+        else if (act == MotorActions.Brake) {
             brakeMotor(index);
         }
     }
@@ -515,11 +515,11 @@ namespace Rover {
         if (!is_PCA9685_Initialized) {
             init_PCA9685()
         }
-        if (act = MotorActions.Stop) {
+        if (act == MotorActions.Stop) {
             MotorRun(Motors.M1, 0);
             MotorRun(Motors.M2, 0);
         }
-        else if (act = MotorActions.Brake) {
+        else if (act == MotorActions.Brake) {
             brakeMotor(Motors.M1);
             brakeMotor(Motors.M2);
         }
