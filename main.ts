@@ -278,9 +278,6 @@ namespace Rover {
     //% color=#FFA500
     //% group="LEDs"
     export function setRGBLED(index: number, ccolor: number): void {
-        if (!is_PCA9685_Initialized) {
-            init_PCA9685()
-        }
         index = Math.constrain(index, 0, 15);
         if ((index & 0x01) == 0x01) {
             leds1.setColor(ccolor);
@@ -304,9 +301,6 @@ namespace Rover {
     //% group="LEDs"
     //% color=#FFA500
     export function setALLRGB(ccolor: number): void {
-        if (!is_PCA9685_Initialized) {
-            init_PCA9685()
-        }
         setRGBLED(LEDIndex.LED_All, ccolor);
     }
     /**
@@ -418,18 +412,8 @@ namespace Rover {
     //% group="Motors"
     //% color=#222222
     export function MotorRun(index: Motors, speed: number): void {
-        if (!is_PCA9685_Initialized) {
-            init_PCA9685()
-        }
-        speed = speed * 16; // map 255 to 4096
-        if (speed >= 4096) {
-            speed = 4095
-        }
-        if (speed <= -4096) {
-            speed = -4095
-        }
-        if (index > 2 || index <= 0)
-            return
+        speed = Math.map(speed, -255, 255, -4095, 4095);
+        speed = Math.constrain(speed, -4095, 4095);
         let pp = (index - 1) * 2
         let pn = (index - 1) * 2 + 1
         if (index == Motors.M2) {
@@ -493,9 +477,6 @@ namespace Rover {
     //% group="Motors"
     //% color=#222222
     export function MotorStop(act: MotorActions, index: Motors): void {
-        if (!is_PCA9685_Initialized) {
-            init_PCA9685()
-        }
         if (act == MotorActions.Stop) {
             MotorRun(index, 0);
         }
@@ -512,9 +493,6 @@ namespace Rover {
     //% group="Motors"
     //% color=#222222
     export function MotorStopAll(act: MotorActions): void {
-        if (!is_PCA9685_Initialized) {
-            init_PCA9685()
-        }
         if (act == MotorActions.Stop) {
             MotorRun(Motors.M1, 0);
             MotorRun(Motors.M2, 0);
