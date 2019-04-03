@@ -1,0 +1,7 @@
+{
+	"Rover.setBrightness|block": "设置亮度 %br",
+	"Rover.setRGBLED|block": "%index|显示%ccolor",
+	"Rover.setAllRGB|block":"所有LED显示%ccolor",
+	"Rover.hsl|block":"色度:%h|饱和度%s|亮度%l",
+	"RoverColors.Red|block":"红色"
+}
